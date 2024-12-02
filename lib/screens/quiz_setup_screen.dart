@@ -1,9 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-
 import 'quiz_screen.dart';
-
 import 'package:http/http.dart' as http;
 
 class QuizSetupScreen extends StatefulWidget {
@@ -12,9 +9,9 @@ class QuizSetupScreen extends StatefulWidget {
 }
 
 class _QuizSetupScreenState extends State<QuizSetupScreen> {
-  final List<int> _questionCounts = [5, 10, 15];
+  final List<int> _questionCounts = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
   int _selectedQuestionCount = 10;
-  String _selectedCategory = 'General Knowledge';
+  String? _selectedCategory; // Nullable to handle initialization
   String _selectedDifficulty = 'easy';
   String _selectedType = 'multiple';
 
@@ -32,7 +29,16 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
-        _categories = List<Map<String, String>>.from(data['trivia_categories']);
+        _categories = (data['trivia_categories'] as List<dynamic>)
+            .map((category) => {
+                  'id': category['id'].toString(),
+                  'name': category['name'] as String,
+                })
+            .toList();
+        // Set _selectedCategory to the first category ID
+        if (_categories.isNotEmpty) {
+          _selectedCategory = _categories.first['id'];
+        }
       });
     } else {
       throw Exception('Failed to load categories');
@@ -45,7 +51,7 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
       MaterialPageRoute(
         builder: (context) => QuizScreen(
           questionCount: _selectedQuestionCount,
-          category: _selectedCategory,
+          category: _selectedCategory!,
           difficulty: _selectedDifficulty,
           type: _selectedType,
         ),
@@ -69,21 +75,26 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
                   setState(() => _selectedQuestionCount = value!),
               items: _questionCounts.map((count) {
                 return DropdownMenuItem(
-                    value: count, child: Text('$count Questions'));
+                  value: count,
+                  child: Text('$count Questions'),
+                );
               }).toList(),
             ),
             SizedBox(height: 16),
             Text('Select Category'),
-            DropdownButton<String>(
-              value: _selectedCategory,
-              onChanged: (value) => setState(() => _selectedCategory = value!),
-              items: _categories.map((category) {
-                return DropdownMenuItem(
-                  value: category['id'],
-                  child: Text(category['name']!),
-                );
-              }).toList(),
-            ),
+            if (_categories.isEmpty) Text('Loading categories...'),
+            if (_categories.isNotEmpty)
+              DropdownButton<String>(
+                value: _selectedCategory,
+                onChanged: (value) =>
+                    setState(() => _selectedCategory = value!),
+                items: _categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category['id'],
+                    child: Text(category['name'] ?? ''),
+                  );
+                }).toList(),
+              ),
             SizedBox(height: 16),
             Text('Select Difficulty'),
             DropdownButton<String>(
@@ -92,7 +103,9 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
                   setState(() => _selectedDifficulty = value!),
               items: ['easy', 'medium', 'hard'].map((level) {
                 return DropdownMenuItem(
-                    value: level, child: Text(level.toUpperCase()));
+                  value: level,
+                  child: Text(level.toUpperCase()),
+                );
               }).toList(),
             ),
             SizedBox(height: 16),
@@ -102,14 +115,15 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
               onChanged: (value) => setState(() => _selectedType = value!),
               items: ['multiple', 'boolean'].map((type) {
                 return DropdownMenuItem(
-                    value: type,
-                    child: Text(
-                        type == 'multiple' ? 'Multiple Choice' : 'True/False'));
+                  value: type,
+                  child: Text(
+                      type == 'multiple' ? 'Multiple Choice' : 'True/False'),
+                );
               }).toList(),
             ),
             Spacer(),
             ElevatedButton(
-              onPressed: _startQuiz,
+              onPressed: _categories.isNotEmpty ? _startQuiz : null,
               child: Text('Start Quiz'),
             ),
           ],
