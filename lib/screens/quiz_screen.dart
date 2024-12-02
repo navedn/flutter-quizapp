@@ -125,6 +125,12 @@ class _QuizScreenState extends State<QuizScreen> {
             totalQuestions: _questions.length,
             correctAnswers: _correctAnswers,
             questions: _questions,
+            quizParams: {
+              'questionCount': widget.questionCount,
+              'category': widget.category,
+              'difficulty': widget.difficulty,
+              'type': widget.type,
+            },
           ),
         ),
       ).then((_) {
@@ -224,12 +230,14 @@ class QuizSummaryScreen extends StatelessWidget {
   final int totalQuestions;
   final List<bool> correctAnswers;
   final List<Question> questions;
+  final Map<String, dynamic> quizParams;
 
   QuizSummaryScreen({
     required this.totalScore,
     required this.totalQuestions,
     required this.correctAnswers,
     required this.questions,
+    required this.quizParams,
   });
 
   @override
@@ -264,14 +272,45 @@ class QuizSummaryScreen extends StatelessWidget {
               onPressed: () => Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
+                  builder: (context) => QuizScreen(
+                    questionCount: quizParams['questionCount'],
+                    category: quizParams['category'],
+                    difficulty: quizParams['difficulty'],
+                    type: quizParams['type'],
+                  ),
+                ),
+              ),
+              child: Text('Retake Quiz'),
+              style: _tronButtonStyle(),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
                   builder: (context) => QuizSetupScreen(),
                 ),
               ),
-              child: Text('Try Another Quiz?'),
+              child: Text('Return to Set-up?'),
+              style: _tronButtonStyle(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  ButtonStyle _tronButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.cyanAccent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.cyanAccent, width: 2),
+      ),
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      elevation: 8,
+      shadowColor: Colors.cyanAccent,
     );
   }
 }
